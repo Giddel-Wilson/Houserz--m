@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int              @id @default(autoincrement())
+  email                  String           @unique
+  passwordHash           String           @map("password_hash")
+  fullName               String           @map("full_name")
+  phone                  String?
+  profileImage           String?          @map("profile_image")
+  bio                    String?
+  company                String?
+  licenseNumber          String?          @map("license_number")
+  yearsExperience        Int?             @map("years_experience")
+  specialization         String?
+  isVerified             Boolean          @default(false) @map("is_verified")
+  isActive               Boolean          @default(true) @map("is_active")
+  createdAt              DateTime         @default(now()) @map("created_at")
+  updatedAt              DateTime         @updatedAt @map("updated_at")
+  isBanned               Boolean          @default(false) @map("is_banned")
+  isOnline               Boolean          @default(false) @map("is_online")
+  isSuspended            Boolean          @default(false) @map("is_suspended")
+  lastSeen               DateTime?        @map("last_seen")
+  suspendedUntil         DateTime?        @map("suspended_until")
+  role                   String           @default("CLIENT")
+  adminActivities        AdminActivity[]  @relation("AdminActivitiesAsAdmin")
+  adminBroadcasts        AdminBroadcast[] @relation("AdminBroadcastSender")
+  initiatedConversations Conversation[]   @relation("ConversationInitiator")
+  receivedConversations  Conversation[]   @relation("ConversationReceiver")
+  sentMessages           Message[]        @relation("SentMessages")
+  properties             Property[]       @relation("AgentProperties")
+  penalties              UserPenalty[]    @relation("UserPenalties")
+  agentViewings          ViewingRequest[] @relation("AgentViewings")
+  viewingRequests        ViewingRequest[] @relation("ClientViewings")
+  favorites              UserFavorite[]   @relation("UserFavorites")
+  propertyViews          PropertyView[]   @relation("UserPropertyViews")
+
+  @@map("users")
+}
+
+model Property {
+  id              Int              @id @default(autoincrement())
+  agentId         Int              @map("agent_id")
+  title           String
+  description     String?
+  propertyType    String           @map("property_type")
+  price           Decimal
+  bedrooms        Int?
+  bathrooms       Int?
+  sqft            Int?
+  lotSize         Decimal?         @map("lot_size")
+  yearBuilt       Int?             @map("year_built")
+  address         String
+  city            String
+  state           String
+  postalCode      String?          @map("postal_code")
+  country         String           @default("Nigeria")
+  latitude        Decimal?
+  longitude       Decimal?
+  features        String?
+  isFeatured      Boolean          @default(false) @map("is_featured")
+  viewsCount      Int              @default(0) @map("views_count")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  listingType     String           @default("SALE") @map("listing_type")
+  status          String           @default("ACTIVE")
+  conversations   Conversation[]
+  agent           User             @relation("AgentProperties", fields: [agentId], references: [id], onDelete: Cascade)
+  images          PropertyImage[]
+  viewingRequests ViewingRequest[]
+  favoritedBy     UserFavorite[]   @relation("PropertyFavorites")
+  views           PropertyView[]   @relation("PropertyViews")
+
+  @@map("properties")
+}
+
+model PropertyImage {
+  id           Int      @id @default(autoincrement())
+  propertyId   Int      @map("property_id")
+  imageUrl     String   @map("image_url")
+  altText      String?  @map("alt_text")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model ViewingRequest {
+  id            Int      @id @default(autoincrement())
+  propertyId    Int      @map("property_id")
+  clientId      Int      @map("client_id")
+  agentId       Int      @map("agent_id")
+  preferredDate DateTime @map("preferred_date")
+  preferredTime String   @map("preferred_time")
+  message       String?
+  agentNotes    String?  @map("agent_notes")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  status        String   @default("PENDING")
+  agent         User     @relation("AgentViewings", fields: [agentId], references: [id], onDelete: Cascade)
+  client        User     @relation("ClientViewings", fields: [clientId], references: [id], onDelete: Cascade)
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("viewing_requests")
+}
+
+model Conversation {
+  id               Int       @id @default(autoincrement())
+  initiatorId      Int       @map("initiator_id")
+  receiverId       Int       @map("receiver_id")
+  propertyId       Int?      @map("property_id")
+  subject          String?
+  lastMessageAt    DateTime  @default(now()) @map("last_message_at")
+  isActive         Boolean   @default(true) @map("is_active")
+  canReceiverReply Boolean   @default(true) @map("can_receiver_reply")
+  adminRestricted  Boolean   @default(false) @map("admin_restricted")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  initiator        User      @relation("ConversationInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  property         Property? @relation(fields: [propertyId], references: [id])
+  receiver         User      @relation("ConversationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  messages         Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id               Int             @id @default(autoincrement())
+  conversationId   Int             @map("conversation_id")
+  senderId         Int             @map("sender_id")
+  content          String
+  isRead           Boolean         @default(false) @map("is_read")
+  isDelivered      Boolean         @default(false) @map("is_delivered")
+  isSystemMessage  Boolean         @default(false) @map("is_system_message")
+  metadata         String?
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  adminBroadcastId Int?            @map("admin_broadcast_id")
+  messageType      String          @default("TEXT")
+  adminBroadcast   AdminBroadcast? @relation(fields: [adminBroadcastId], references: [id])
+  conversation     Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender           User            @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model AdminBroadcast {
+  id           Int       @id @default(autoincrement())
+  senderId     Int       @map("sender_id")
+  content      String
+  subject      String?
+  messageType  String    @default("NOTIFICATION") @map("message_type")
+  recipientIds String    @map("recipient_ids")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  sender       User      @relation("AdminBroadcastSender", fields: [senderId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@map("admin_broadcasts")
+}
+
+model UserPenalty {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  adminId   Int       @map("admin_id")
+  type      String
+  reason    String
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation("UserPenalties", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_penalties")
+}
+
+model AdminActivity {
+  id         Int      @id @default(autoincrement())
+  adminId    Int      @map("admin_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  details    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  admin      User     @relation("AdminActivitiesAsAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("admin_activities")
+}
+
+model UserFavorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  propertyId Int      @map("property_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation("PropertyFavorites", fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@map("user_favorites")
+}
+
+model PropertyView {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  propertyId Int      @map("property_id")
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+  user       User     @relation("UserPropertyViews", fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation("PropertyViews", fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_views")
+}
