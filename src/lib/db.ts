@@ -1,11 +1,13 @@
-import { DATABASE_URL } from '$env/static/private';
-
 let neonSql: any = null;
 
 async function initNeon() {
 	if (!neonSql) {
 		try {
 			const { neon } = await import('@neondatabase/serverless');
+			const DATABASE_URL = process.env.DATABASE_URL;
+			if (!DATABASE_URL) {
+				throw new Error('DATABASE_URL environment variable is not set');
+			}
 			neonSql = neon(DATABASE_URL);
 		} catch (error) {
 			throw new Error('Failed to initialize Neon connection: ' + error);
