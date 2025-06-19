@@ -2,5 +2,5 @@
   "framework": "sveltekit",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev", 
-  "installCommand": "npm ci --legacy-peer-deps --omit=optional && npm run db:generate"
+  "installCommand": "npm ci --legacy-peer-deps --omit=optional"
 }
