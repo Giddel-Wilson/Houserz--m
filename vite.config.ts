@@ -1,11 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import tailwindcss from '@tailwindcss/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
 
 export default defineConfig({
 	plugins: [
-		tailwindcss(),
 		sveltekit(),
 		process.env.NODE_ENV === 'development' && {
 			name: 'socket.io',
