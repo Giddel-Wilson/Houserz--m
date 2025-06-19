@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Eye, EyeOff, Mail, Lock, User, UserCheck } from 'lucide-svelte';
+	import { Eye, EyeOff, Mail, Lock, User, UserCheck, Phone } from 'lucide-svelte';
 
 	let name = '';
 	let email = '';
+	let phone = '';
 	let password = '';
 	let confirmPassword = '';
 	let role = 'buyer';
@@ -13,7 +14,7 @@
 	let error = '';
 
 	async function handleRegister() {
-		if (!name || !email || !password || !confirmPassword) {
+		if (!name || !email || !phone || !password || !confirmPassword) {
 			error = 'Please fill in all fields';
 			return;
 		}
@@ -37,7 +38,7 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ name, email, password, role })
+				body: JSON.stringify({ name, email, phone, password, role })
 			});
 
 			const data = await response.json();
@@ -121,6 +122,23 @@
 							placeholder="Enter your email"
 						/>
 						<Mail class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+					</div>
+				</div>
+
+				<div>
+					<label for="phone" class="block text-sm font-medium text-gray-700">
+						Phone Number
+					</label>
+					<div class="mt-1 relative">
+						<input
+							id="phone"
+							type="tel"
+							bind:value={phone}
+							required
+							class="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+							placeholder="Enter your phone number"
+						/>
+						<Phone class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
 					</div>
 				</div>
 
