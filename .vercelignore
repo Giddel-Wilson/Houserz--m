@@ -16,6 +16,5 @@ dist
 build
 .cache
 .svelte-kit
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
