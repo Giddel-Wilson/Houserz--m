@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 import { prisma } from '$lib/database.js';
 import { uploadToCloudinary } from '$lib/cloudinary';
 
@@ -19,7 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		let decoded: any;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 			console.log('Decoded JWT:', decoded);
 		} catch (error) {
 			console.log('JWT verification failed:', error);
@@ -171,7 +171,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		let decoded: any;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

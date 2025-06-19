@@ -3,7 +3,7 @@ import { prisma } from '$lib/database.js';
 import jwt from 'jsonwebtoken';
 import type { RequestHandler } from './$types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 
 export const DELETE: RequestHandler = async ({ request, params }) => {
 	try {
@@ -18,7 +18,7 @@ export const DELETE: RequestHandler = async ({ request, params }) => {
 		let decoded;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
+			decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -69,7 +69,7 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 		let decoded;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
+			decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -140,7 +140,7 @@ export const GET: RequestHandler = async ({ request, params }) => {
 		let decoded;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
+			decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

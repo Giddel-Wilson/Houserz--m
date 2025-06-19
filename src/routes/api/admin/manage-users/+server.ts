@@ -3,7 +3,7 @@ import { prisma } from '$lib/database.js';
 import jwt from 'jsonwebtoken';
 import type { RequestHandler } from './$types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 
 export const GET: RequestHandler = async ({ request }) => {
 	try {
@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ request }) => {
 		const token = authHeader.slice(7);
 		let decoded;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

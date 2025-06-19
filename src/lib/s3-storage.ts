@@ -1,11 +1,10 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_BUCKET_NAME } from '$env/static/private';
 
 const s3Client = new S3Client({
-	region: AWS_REGION,
+	region: process.env.AWS_REGION!,
 	credentials: {
-		accessKeyId: AWS_ACCESS_KEY_ID,
-		secretAccessKey: AWS_SECRET_ACCESS_KEY,
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
 	},
 });
 
@@ -37,7 +36,7 @@ export async function uploadToS3(
 		const key = `${folder}/${fileName}`;
 
 		const command = new PutObjectCommand({
-			Bucket: AWS_BUCKET_NAME,
+			Bucket: process.env.AWS_BUCKET_NAME!,
 			Key: key,
 			Body: buffer,
 			ContentType: contentType,
@@ -46,7 +45,7 @@ export async function uploadToS3(
 
 		await s3Client.send(command);
 
-		const url = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+		const url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
 		return { url, key };
 	} catch (error) {
@@ -58,7 +57,7 @@ export async function uploadToS3(
 export async function deleteFromS3(key: string): Promise<void> {
 	try {
 		const command = new DeleteObjectCommand({
-			Bucket: AWS_BUCKET_NAME,
+			Bucket: process.env.AWS_BUCKET_NAME!,
 			Key: key,
 		});
 

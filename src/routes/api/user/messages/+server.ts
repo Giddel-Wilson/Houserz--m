@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET! || 'your-secret-key') as any;
     // The user ID is stored as 'id' in the JWT token, not 'userId'
     const userId = decoded.id;
     console.log('Messages API (GET): Authenticated user ID:', userId);
@@ -137,7 +137,7 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET! || 'your-secret-key') as any;
     const userId = decoded.id; // ID stored in JWT
     console.log('Messages API: Authenticated user ID:', userId);
 

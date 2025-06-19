@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 import { prisma } from '$lib/database.js';
 
 export const GET: RequestHandler = async ({ params, request }) => {
@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		let decoded: any;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -73,7 +73,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		let decoded: any;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -148,7 +148,7 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		let decoded: any;
 		
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (error) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

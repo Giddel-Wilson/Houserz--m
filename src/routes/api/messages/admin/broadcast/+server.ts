@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 import { io } from '$lib/server/socket';
 
 interface JWTPayload {
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request }) => {
     let decoded: JWTPayload;
     
     try {
-      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
     } catch (err) {
       return json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -196,7 +196,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     let decoded: JWTPayload;
     
     try {
-      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
     } catch (err) {
       return json({ error: 'Invalid token' }, { status: 401 });
     }

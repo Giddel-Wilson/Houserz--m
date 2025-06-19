@@ -3,7 +3,7 @@ import { verifyToken } from '$lib/auth.js';
 import { prisma } from '$lib/database.js';
 import type { RequestHandler } from './$types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 
 export const GET: RequestHandler = async ({ request, url }) => {
 	try {

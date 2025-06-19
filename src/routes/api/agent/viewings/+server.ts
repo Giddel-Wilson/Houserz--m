@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 import type { RequestHandler } from './$types';
 
 // GET - Get agent's property viewing requests
@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		// Verify JWT token
 		let decoded: any;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (err) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -109,7 +109,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 		// Verify JWT token
 		let decoded: any;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (err) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

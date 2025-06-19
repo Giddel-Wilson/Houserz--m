@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { db } from '$lib/db';
 import type { RequestHandler } from './$types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 
 // PATCH - Update a viewing request status
 export const PATCH: RequestHandler = async ({ request, params }) => {
@@ -19,7 +19,7 @@ export const PATCH: RequestHandler = async ({ request, params }) => {
 		// Verify JWT token
 		let decoded;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
+			decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 		} catch (err) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
@@ -81,7 +81,7 @@ export const DELETE: RequestHandler = async ({ request, params }) => {
 		// Verify JWT token
 		let decoded;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
+			decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 		} catch (err) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}

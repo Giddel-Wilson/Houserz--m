@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = 'your-secret-key';
+// JWT_SECRET will be accessed via process.env.JWT_SECRET
 
 // POST - Schedule a property viewing
 export async function POST({ request, params }) {
@@ -21,7 +21,7 @@ export async function POST({ request, params }) {
 		// Verify JWT token
 		let decoded;
 		try {
-			decoded = jwt.verify(token, JWT_SECRET);
+			decoded = jwt.verify(token, process.env.JWT_SECRET!);
 		} catch (err) {
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
