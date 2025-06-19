@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async () => {
@@ -9,17 +9,8 @@ export const GET: RequestHandler = async () => {
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
     console.log('DATABASE_URL preview:', process.env.DATABASE_URL?.substring(0, 50) + '...');
 
-    // Test if we can create Prisma client directly
-    console.log('Creating Prisma client directly...');
-    const prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-      log: ['error', 'warn'],
-    });
-    console.log('Prisma client created:', !!prisma);
+    console.log('Using shared Prisma instance...');
+    console.log('Prisma client exists:', !!prisma);
 
     // Test basic connection
     console.log('Testing database connection...');
@@ -48,8 +39,8 @@ export const GET: RequestHandler = async () => {
     });
     console.log('Properties fetched:', properties.length);
 
-    // Clean up
-    await prisma.$disconnect();
+    // No need to clean up with shared instance
+    // await prisma.$disconnect();
 
     return json({
       success: true,

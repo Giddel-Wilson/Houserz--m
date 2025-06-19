@@ -2,9 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '$env/static/private';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '$lib/database.js';
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	try {

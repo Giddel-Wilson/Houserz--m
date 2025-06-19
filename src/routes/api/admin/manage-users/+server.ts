@@ -1,19 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  log: ['error', 'warn'],
-});
+import type { RequestHandler } from './$types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
-export async function GET({ request }) {
+export const GET: RequestHandler = async ({ request }) => {
 	try {
 		console.log('[Admin Manage Users API] GET request received');
 		

@@ -1,9 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import jwt from 'jsonwebtoken';
 import type { RequestHandler } from './$types';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 export const PATCH: RequestHandler = async ({ request, params }) => {

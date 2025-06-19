@@ -1,4 +1,4 @@
-import { prisma } from './database';
+import { prisma } from './database.js';
 
 /**
  * Function to test database connectivity and log detailed information

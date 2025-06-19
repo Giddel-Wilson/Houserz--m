@@ -1,9 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '$lib/auth.js';
+import { prisma } from '$lib/database.js';
 import type { RequestHandler } from './$types';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 export const GET: RequestHandler = async ({ request, url }) => {
@@ -19,16 +18,14 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		const token = authHeader.substring(7);
 		console.log('[Admin Properties API] Token received, verifying...');
 		
-		let decoded;
-		try {
-			decoded = jwt.verify(token, JWT_SECRET) as any;
-			console.log('[Admin Properties API] Token verified:', { userId: decoded.userId, role: decoded.role });
-		} catch (error) {
-			console.log('[Admin Properties API] Token verification failed:', error);
+		const decoded = verifyToken(token);
+		if (!decoded) {
+			console.log('[Admin Properties API] Token verification failed');
 			return json({ error: 'Invalid token' }, { status: 401 });
 		}
+		console.log('[Admin Properties API] Token verified:', { userId: decoded.id, role: decoded.role });
 		
-		if (!decoded || decoded.role !== 'ADMIN') {
+		if (decoded.role !== 'ADMIN') {
 			console.log('[Admin Properties API] User not admin:', decoded?.role);
 			return json({ error: 'Unauthorized - Admin access required' }, { status: 401 });
 		}

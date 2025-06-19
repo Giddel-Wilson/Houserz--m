@@ -1,17 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import type { RequestHandler } from './$types.js';
 import { verifyToken } from '$lib/auth';
-
-// Create Prisma client instance
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  log: ['error', 'warn'],
-});
 
 export const GET: RequestHandler = async ({ params, request }) => {
   try {

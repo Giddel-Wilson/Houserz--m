@@ -1,7 +1,7 @@
 import { Server, type Socket } from 'socket.io';
 import type { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../database';
+import { prisma } from '../database.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 

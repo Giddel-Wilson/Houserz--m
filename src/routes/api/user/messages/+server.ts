@@ -1,9 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import jwt from 'jsonwebtoken';
 import type { RequestHandler } from './$types.js';
-
-const prisma = new PrismaClient();
 
 export const GET: RequestHandler = async ({ request, url }) => {
   try {

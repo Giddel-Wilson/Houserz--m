@@ -2,11 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '$env/static/private';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '$lib/database.js';
 import { uploadToCloudinary } from '$lib/cloudinary';
-
-// Create Prisma client instance
-const prisma = new PrismaClient();
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {

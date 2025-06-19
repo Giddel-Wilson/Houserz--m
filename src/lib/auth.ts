@@ -1,18 +1,8 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './database.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
-
-// Create Prisma client with Neon-optimized settings
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
 
 export interface User {
   id: number;
@@ -78,7 +68,7 @@ export async function createUser(
       },
     });
     
-    return user;
+    return user as User;
   } catch (error: any) {
     console.error('Prisma error in createUser:', error);
     
@@ -96,8 +86,7 @@ export async function createUser(
 }
 
 export async function getUserByEmail(email: string): Promise<(User & { passwordHash: string }) | null> {
-  try {
-    const user = await prisma.user.findUnique({
+  try {    const user = await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
@@ -108,8 +97,8 @@ export async function getUserByEmail(email: string): Promise<(User & { passwordH
         isVerified: true,
       },
     });
-    
-    return user;
+
+    return user as (User & { passwordHash: string; }) | null;
   } catch (error: any) {
     console.error('Prisma error in getUserByEmail:', error);
     
@@ -122,8 +111,7 @@ export async function getUserByEmail(email: string): Promise<(User & { passwordH
 }
 
 export async function getUserById(id: number): Promise<User | null> {
-  try {
-    const user = await prisma.user.findUnique({
+  try {    const user = await prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -133,8 +121,8 @@ export async function getUserById(id: number): Promise<User | null> {
         isVerified: true,
       },
     });
-    
-    return user;
+
+    return user as User | null;
   } catch (error: any) {
     console.error('Prisma error in getUserById:', error);
     
