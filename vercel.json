@@ -3,11 +3,6 @@
   "buildCommand": "npx vite build",
   "devCommand": "npx vite dev", 
   "installCommand": "npm ci --legacy-peer-deps --no-optional && npm run db:generate",
-  "functions": {
-    "src/routes/api/**/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  },
   "env": {
     "DATABASE_URL": "@database_url"
   },
