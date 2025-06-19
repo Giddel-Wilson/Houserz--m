@@ -1,10 +1,9 @@
 {
   "framework": "sveltekit",
-  "buildCommand": "npx vite build",
-  "devCommand": "npx vite dev", 
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev", 
   "installCommand": "npm ci --legacy-peer-deps --no-optional && npm run db:generate",
   "env": {
     "DATABASE_URL": "@database_url"
-  },
-  "packageManager": "npm"
+  }
 }
