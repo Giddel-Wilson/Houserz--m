@@ -196,21 +196,26 @@ export const POST: RequestHandler = async ({ request }) => {
     let conversation = null;
     
     try {
+      let whereConditions: any = {
+        OR: [
+          {
+            initiatorId: userId,
+            receiverId: recipientIdNum
+          },
+          {
+            initiatorId: recipientIdNum,
+            receiverId: userId
+          }
+        ]
+      };
+
+      // If it's a property inquiry, look for conversations specifically about this property
+      if (propertyIdNum) {
+        whereConditions.propertyId = propertyIdNum;
+      }
+
       conversation = await prisma.conversation.findFirst({
-        where: {
-          OR: [
-            {
-              initiatorId: userId,
-              receiverId: recipientIdNum,
-              ...(propertyIdNum ? { propertyId: propertyIdNum } : {})
-            },
-            {
-              initiatorId: recipientIdNum,
-              receiverId: userId,
-              ...(propertyIdNum ? { propertyId: propertyIdNum } : {})
-            }
-          ]
-        }
+        where: whereConditions
       });
       
       console.log('Messages API: Existing conversation found?', !!conversation, 
@@ -257,18 +262,48 @@ export const POST: RequestHandler = async ({ request }) => {
     try {
       console.log('Messages API: Creating message in conversation ID:', conversation.id);
       
-      // Prepend property info to first message if it's property related
-      let messageContent = message;
-      if (propertyData && !conversation.lastMessageAt) {
-        // This is the first message in a property inquiry
-        messageContent = `[Regarding property: ${propertyData.title || 'Property Inquiry'}]\n\n${message}`;
+      // Prepare message metadata for property attachments
+      let messageMetadata = null;
+      let messageType = 'TEXT';
+      
+      if (propertyData) {
+        // For property inquiries, always attach property metadata to show the property card
+        messageType = 'PROPERTY_INQUIRY';
+        
+        // Get property image
+        const propertyImage = await prisma.propertyImage.findFirst({
+          where: { 
+            propertyId: propertyData.id,
+            isPrimary: true 
+          },
+          select: { imageUrl: true }
+        });
+        
+        messageMetadata = JSON.stringify({
+          property: {
+            id: propertyData.id,
+            title: propertyData.title,
+            city: propertyData.city,
+            state: propertyData.state,
+            price: propertyData.price,
+            listingType: propertyData.listingType,
+            imageUrl: propertyImage?.imageUrl || null
+          }
+        });
+        
+        console.log('Messages API: Property metadata attached:', {
+          propertyId: propertyData.id,
+          hasImage: !!propertyImage?.imageUrl
+        });
       }
       
       newMessage = await prisma.message.create({
         data: {
           conversationId: conversation.id,
           senderId: userId,
-          content: messageContent
+          content: message,
+          messageType,
+          metadata: messageMetadata
         },
         include: {
           sender: {

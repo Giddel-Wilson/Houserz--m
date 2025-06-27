@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
+	import ModalDialog from '$lib/components/ModalDialog.svelte';
 	import {
 		Send,
 		Search,
@@ -16,7 +17,8 @@
 		Check,
 		CheckCheck,
 		Info,
-		Plus
+		Plus,
+		Home
 	} from 'lucide-svelte';
 	import {
 		socketService,
@@ -704,6 +706,56 @@
 													</span>
 												</div>
 												<div class="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm">
+													<!-- Property Attachment for PROPERTY_INQUIRY messages -->
+													{#if message.messageType === 'PROPERTY_INQUIRY' && message.metadata}
+														{@const propertyData = JSON.parse(message.metadata).property}
+														<div class="mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+															<!-- Property Image (clickable) -->
+															<button
+																on:click={() => window.open(`/agent/properties/${propertyData.id}`, '_blank')}
+																class="relative w-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-500"
+															>
+																{#if propertyData.imageUrl}
+																	<img
+																		src={propertyData.imageUrl}
+																		alt={propertyData.title}
+																		class="h-32 w-full object-cover transition-all duration-200"
+																		style="filter: blur(0.5px);"
+																		on:error={(e) => {
+																			console.error('Image failed to load:', propertyData.imageUrl);
+																			e.target.src = '/placeholder-property.jpg';
+																		}}
+																		on:load={() => console.log('Image loaded:', propertyData.imageUrl)}
+																		on:mouseenter={(e) => e.target.style.filter = 'blur(0px)'}
+																		on:mouseleave={(e) => e.target.style.filter = 'blur(0.5px)'}
+																	/>
+																{:else}
+																	<div class="h-32 bg-gray-300 flex items-center justify-center">
+																		<Home class="h-8 w-8 text-gray-500" />
+																	</div>
+																{/if}
+															</button>
+															
+															<!-- Property Details -->
+															<div class="p-3">
+																<h4 class="font-medium text-gray-900 text-sm mb-1 line-clamp-1">
+																	{propertyData.title}
+																</h4>
+																<p class="text-xs text-gray-600 mb-2">
+																	{propertyData.city && propertyData.state ? `${propertyData.city}, ${propertyData.state}` : (propertyData.city || propertyData.state || 'Location not specified')}
+																</p>
+																<div class="flex items-center justify-between">
+																	<span class="text-xs font-medium text-green-600">
+																		₦{Number(propertyData.price).toLocaleString()}
+																	</span>
+																	<span class="text-xs text-gray-500 capitalize">
+																		{propertyData.listingType?.toLowerCase() || 'sale'}
+																	</span>
+																</div>
+															</div>
+														</div>
+													{/if}
+													
 													<p class="text-sm text-gray-900">{message.content}</p>
 													<p class="mt-1 text-xs text-gray-500">
 														{formatTime(message.timestamp || message.createdAt)}
@@ -714,6 +766,56 @@
 											<div
 												class="rounded-2xl rounded-br-md bg-green-500 px-4 py-3 text-white shadow-sm"
 											>
+												<!-- Property Attachment for PROPERTY_INQUIRY messages -->
+												{#if message.messageType === 'PROPERTY_INQUIRY' && message.metadata}
+													{@const propertyData = JSON.parse(message.metadata).property}
+													<div class="mb-3 overflow-hidden rounded-lg border border-green-300 bg-green-400 bg-opacity-20">
+														<!-- Property Image (clickable) -->
+														<button
+															on:click={() => window.open(`/agent/properties/${propertyData.id}`, '_blank')}
+															class="relative w-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-white"
+														>
+															{#if propertyData.imageUrl}
+																<div class="relative">
+																	<img
+																		src={propertyData.imageUrl}
+																		alt={propertyData.title}
+																		class="h-32 w-full object-cover filter blur-[1px] hover:blur-none transition-all duration-200"
+																	/>
+																	<!-- Overlay with property icon -->
+																	<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+																		<div class="rounded-full bg-white bg-opacity-90 p-2">
+																			<Home class="h-5 w-5 text-gray-600" />
+																		</div>
+																	</div>
+																</div>
+															{:else}
+																<div class="h-32 bg-green-300 bg-opacity-30 flex items-center justify-center">
+																	<Home class="h-8 w-8 text-white" />
+																</div>
+															{/if}
+														</button>
+														
+														<!-- Property Details -->
+														<div class="p-3">
+															<h4 class="font-medium text-white text-sm mb-1 line-clamp-1">
+																{propertyData.title}
+															</h4>
+															<p class="text-xs text-green-100 mb-2">
+																{propertyData.city && propertyData.state ? `${propertyData.city}, ${propertyData.state}` : (propertyData.city || propertyData.state || 'Location not specified')}
+															</p>
+															<div class="flex items-center justify-between">
+																<span class="text-xs font-medium text-white">
+																	₦{Number(propertyData.price).toLocaleString()}
+																</span>
+																<span class="text-xs text-green-100 capitalize">
+																	{propertyData.listingType?.toLowerCase() || 'sale'}
+																</span>
+															</div>
+														</div>
+													</div>
+												{/if}
+												
 												<p class="text-sm">{message.content}</p>
 												<div class="mt-1 flex items-center justify-end space-x-1">
 													<span class="text-xs text-green-100"

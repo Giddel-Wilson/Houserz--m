@@ -67,6 +67,7 @@ export const GET: RequestHandler = async ({ request, params }) => {
       senderId: msg.senderId,
       content: msg.content,
       messageType: msg.messageType,
+      metadata: msg.metadata, // Include metadata for property cards
       isRead: msg.isRead,
       isDelivered: msg.isDelivered,
       isSystemMessage: msg.isSystemMessage,

@@ -28,12 +28,15 @@
 	let sidebarOpen = false;
 	let searchTerm = '';
 	let searchTimeout: NodeJS.Timeout;
+	let showFilters = false;
 	let selectedFilters = {
 		location: '',
 		minPrice: '',
 		maxPrice: '',
 		bedrooms: '',
-		propertyType: ''
+		bathrooms: '',
+		propertyType: '',
+		listingType: '' // rent or sale
 	};
 
 	onMount(() => {
@@ -88,6 +91,12 @@
 			}
 			if (selectedFilters.bedrooms) {
 				params.append('bedrooms', selectedFilters.bedrooms);
+			}
+			if (selectedFilters.bathrooms) {
+				params.append('bathrooms', selectedFilters.bathrooms);
+			}
+			if (selectedFilters.listingType) {
+				params.append('listing_type', selectedFilters.listingType);
 			}
 			
 			console.log('Dashboard: Fetching from /api/properties with params:', params.toString());
@@ -270,6 +279,28 @@
 		sidebarOpen = false;
 	}
 
+	function toggleFilters() {
+		showFilters = !showFilters;
+	}
+
+	function clearFilters() {
+		selectedFilters = {
+			location: '',
+			minPrice: '',
+			maxPrice: '',
+			bedrooms: '',
+			bathrooms: '',
+			propertyType: '',
+			listingType: ''
+		};
+		loadProperties();
+	}
+
+	function applyFilters() {
+		loadProperties();
+		showFilters = false;
+	}
+
 	// Add debounced search function
 	function debouncedSearch() {
 		clearTimeout(searchTimeout);
@@ -448,9 +479,17 @@
 					</div>
 					
 					<!-- Filter Button -->
-					<button class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+					<button 
+						on:click={toggleFilters}
+						class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 {showFilters ? 'bg-blue-100 text-blue-700' : ''}"
+					>
 						<Filter class="h-5 w-5 mr-2" />
 						Filters
+						{#if Object.values(selectedFilters).some(value => value !== '')}
+							<span class="ml-2 bg-green-500 text-white text-xs rounded-full px-2 py-1">
+								{Object.values(selectedFilters).filter(value => value !== '').length}
+							</span>
+						{/if}
 					</button>
 					
 					<!-- Search Button -->
@@ -462,6 +501,148 @@
 						Search
 					</button>
 				</div>
+
+				<!-- Filters Panel -->
+				{#if showFilters}
+					<div class="mt-6 border-t pt-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+							<!-- Listing Type -->
+							<div>
+								<label for="listingType" class="block text-sm font-medium text-gray-700 mb-2">
+									Listing Type
+								</label>
+								<select
+									id="listingType"
+									bind:value={selectedFilters.listingType}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								>
+									<option value="">All Types</option>
+									<option value="sale">For Sale</option>
+									<option value="rent">For Rent</option>
+								</select>
+							</div>
+
+							<!-- Property Type -->
+							<div>
+								<label for="propertyType" class="block text-sm font-medium text-gray-700 mb-2">
+									Property Type
+								</label>
+								<select
+									id="propertyType"
+									bind:value={selectedFilters.propertyType}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								>
+									<option value="">All Properties</option>
+									<option value="apartment">Apartment</option>
+									<option value="house">House</option>
+									<option value="condo">Condo</option>
+									<option value="townhouse">Townhouse</option>
+									<option value="villa">Villa</option>
+									<option value="duplex">Duplex</option>
+									<option value="studio">Studio</option>
+								</select>
+							</div>
+
+							<!-- Bedrooms -->
+							<div>
+								<label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-2">
+									Bedrooms
+								</label>
+								<select
+									id="bedrooms"
+									bind:value={selectedFilters.bedrooms}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								>
+									<option value="">Any</option>
+									<option value="1">1+</option>
+									<option value="2">2+</option>
+									<option value="3">3+</option>
+									<option value="4">4+</option>
+									<option value="5">5+</option>
+								</select>
+							</div>
+
+							<!-- Bathrooms -->
+							<div>
+								<label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-2">
+									Bathrooms
+								</label>
+								<select
+									id="bathrooms"
+									bind:value={selectedFilters.bathrooms}
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								>
+									<option value="">Any</option>
+									<option value="1">1+</option>
+									<option value="2">2+</option>
+									<option value="3">3+</option>
+									<option value="4">4+</option>
+								</select>
+							</div>
+						</div>
+
+						<!-- Price Range -->
+						<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+							<!-- Location -->
+							<div>
+								<label for="location" class="block text-sm font-medium text-gray-700 mb-2">
+									Location
+								</label>
+								<input
+									id="location"
+									type="text"
+									bind:value={selectedFilters.location}
+									placeholder="Enter city or state"
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								/>
+							</div>
+
+							<!-- Min Price -->
+							<div>
+								<label for="minPrice" class="block text-sm font-medium text-gray-700 mb-2">
+									Min Price (₦)
+								</label>
+								<input
+									id="minPrice"
+									type="number"
+									bind:value={selectedFilters.minPrice}
+									placeholder="Min price"
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								/>
+							</div>
+
+							<!-- Max Price -->
+							<div>
+								<label for="maxPrice" class="block text-sm font-medium text-gray-700 mb-2">
+									Max Price (₦)
+								</label>
+								<input
+									id="maxPrice"
+									type="number"
+									bind:value={selectedFilters.maxPrice}
+									placeholder="Max price"
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+								/>
+							</div>
+						</div>
+
+						<!-- Filter Actions -->
+						<div class="flex flex-col sm:flex-row gap-3 justify-end">
+							<button
+								on:click={clearFilters}
+								class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+							>
+								Clear Filters
+							</button>
+							<button
+								on:click={applyFilters}
+								class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+							>
+								Apply Filters
+							</button>
+						</div>
+					</div>
+				{/if}
 			</div>
 
 			{#if loading}

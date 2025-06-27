@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import ModalDialog from '$lib/components/ModalDialog.svelte';
 	import { 
 		ArrowLeft, 
 		Heart, 
@@ -52,11 +53,48 @@
 	let submittingViewing = false;
 	let submittingContact = false;
 
+	// Modal dialog states
+	let modalDialog = {
+		isOpen: false,
+		title: '',
+		message: '',
+		type: 'info' as 'info' | 'success' | 'error' | 'confirm',
+		showCancel: false,
+		confirmText: 'OK',
+		cancelText: 'Cancel',
+		onConfirm: () => {},
+		onCancel: () => {}
+	};
+
 	// Form data
 	let viewingDate = '';
 	let viewingTime = '';
 	let contactMessage = '';
 	let existingConversation: any = null;
+
+	// Helper function to show modal dialogs
+	function showModal(options: {
+		title?: string;
+		message: string;
+		type?: 'info' | 'success' | 'error' | 'confirm';
+		showCancel?: boolean;
+		confirmText?: string;
+		cancelText?: string;
+		onConfirm?: () => void;
+		onCancel?: () => void;
+	}) {
+		modalDialog = {
+			isOpen: true,
+			title: options.title || '',
+			message: options.message,
+			type: options.type || 'info',
+			showCancel: options.showCancel || false,
+			confirmText: options.confirmText || 'OK',
+			cancelText: options.cancelText || 'Cancel',
+			onConfirm: options.onConfirm || (() => {}),
+			onCancel: options.onCancel || (() => {})
+		};
+	}
 
 	// Get property id from URL params
 	$: propertyId = $page.params.id;
@@ -297,7 +335,11 @@
 
 	async function scheduleViewing() {
 		if (!viewingDate || !viewingTime) {
-			alert('Please select both date and time');
+			showModal({
+				title: 'Date and Time Required',
+				message: 'Please select both date and time for your viewing request.',
+				type: 'error'
+			});
 			return;
 		}
 
@@ -319,32 +361,47 @@
 			});
 
 			if (response.ok) {
-				alert('Viewing request submitted successfully!');
+				showModal({
+					title: 'Viewing Requested',
+					message: 'Your viewing request has been submitted successfully! The agent will contact you to confirm the details.',
+					type: 'success'
+				});
 				showScheduleModal = false;
 				viewingDate = '';
 				viewingTime = '';
 				await loadDashboardData();
 			} else {
 				const errorData = await response.json();
-				alert(errorData.error || 'Failed to schedule viewing');
+				showModal({
+					title: 'Request Failed',
+					message: errorData.error || 'Failed to schedule viewing. Please try again.',
+					type: 'error'
+				});
 			}
 		} catch (error) {
 			console.error('Error scheduling viewing:', error);
-			alert('Failed to schedule viewing');
+			showModal({
+				title: 'Connection Error',
+				message: 'Failed to schedule viewing due to a connection error. Please check your internet connection and try again.',
+				type: 'error'
+			});
 		} finally {
 			submittingViewing = false;
 		}
 	}
 
 	// Check for existing conversation with the agent
-	async function checkExistingConversation() {
-		if (!property?.agent?.id) return null;
+	async function checkExistingConversation(agentId?: number, propertyId?: number) {
+		const targetAgentId = agentId || property?.agent?.id;
+		const targetPropertyId = propertyId || property?.id;
+		
+		if (!targetAgentId || !targetPropertyId) return null;
 		
 		try {
 			const token = localStorage.getItem('token');
 			if (!token) return null;
 			
-			const response = await fetch(`/api/user/conversations?property_id=${property.id}&agent_id=${property.agent.id}`, {
+			const response = await fetch(`/api/user/conversations?property_id=${targetPropertyId}&agent_id=${targetAgentId}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -361,101 +418,88 @@
 		return null;
 	}
 
+	// Contact the agent about this property
 	async function contactAgent() {
 		if (!contactMessage.trim()) {
-			alert('Please enter a message');
+			showModal({
+				title: 'Message Required',
+				message: 'Please enter a message before sending.',
+				type: 'error'
+			});
 			return;
 		}
-		
-		if (!property || !property.agent || !property.agent.id) {
-			alert('Agent information is not available for this property');
+
+		if (!property?.agent?.id) {
+			showModal({
+				title: 'Agent Information Missing',
+				message: 'Agent information is not available for this property.',
+				type: 'error'
+			});
 			return;
 		}
 
 		try {
 			submittingContact = true;
-			console.log('Contacting agent:', property.agent.id, 'about property:', property.id);
-			
-			// Add info about whether we're continuing a conversation
-			const continuingConversation = !!existingConversation;
-			console.log('Continuing conversation:', continuingConversation, 
-						existingConversation ? `ID: ${existingConversation.id}` : '');
-			
-			// Prepare message with property information
-			let enhancedMessage = contactMessage;
-			
-			// If this is a new conversation, include the property location and price to make it 
-			// easier for the agent to identify which property the message is about
-			if (!continuingConversation) {
-				const propertyLocation = property.city ? 
-					(property.state ? `${property.city}, ${property.state}` : property.city) : 
-					(property.state || '');
-					
-				const propertyPrice = property.price ? 
-					`₦${property.price.toLocaleString()}` : 
-					'Price not specified';
-					
-				enhancedMessage = `Inquiry about: ${property.title}\nLocation: ${propertyLocation}\nPrice: ${propertyPrice}\n\n${contactMessage}`;
-			}
-			
 			const token = localStorage.getItem('token');
 			
-			if (!token) {
-				throw new Error('Authentication token not found. Please log in again.');
-			}
+			// Check for existing conversation first
+			existingConversation = await checkExistingConversation(property.agent.id, property.id);
 			
-			const messageData = {
-				message: enhancedMessage,
-				property_id: property.id,
-				recipient_id: property.agent.id
-			};
-			
-			// The API handles both new and existing conversations automatically
-			// based on the user, recipient, and property combination
-			console.log('Sending message data:', messageData);
-			
+			// Use the messages API to send a property inquiry message
 			const response = await fetch('/api/user/messages', {
 				method: 'POST',
 				headers: {
 					'Authorization': `Bearer ${token}`,
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(messageData)
+				body: JSON.stringify({
+					recipient_id: property.agent.id,
+					message: contactMessage,
+					property_id: property.id, // This will trigger property inquiry logic
+					messageType: 'PROPERTY_INQUIRY'
+				})
 			});
-			
-			console.log('Response status:', response.status);
-			
+
 			if (response.ok) {
-				const data = await response.json();
-				console.log('Message sent successfully:', data);
+				const result = await response.json();
+				
+				// Show success message based on whether it's a new or existing conversation
+				if (existingConversation) {
+					showModal({
+						title: 'Reply Sent',
+						message: 'Your reply has been sent successfully!',
+						type: 'success'
+					});
+				} else {
+					showModal({
+						title: 'Message Sent',
+						message: 'Your message has been sent successfully! You can continue this conversation in your Messages.',
+						type: 'success',
+						showCancel: true,
+						confirmText: 'Go to Messages',
+						cancelText: 'Stay Here',
+						onConfirm: () => goto('/dashboard/messages')
+					});
+				}
+				
 				showContactModal = false;
 				contactMessage = '';
-				
-				// Show success message
-				const successMessage = continuingConversation ? 
-					'Reply sent successfully!' : 
-					'Message sent successfully! The agent will get back to you soon.';
-				
-				alert(successMessage);
-				
-				// Optional: You could also add a toast notification here
-				// or update a success state to show a banner
+				existingConversation = null;
 			} else {
-				let errorMessage = 'Failed to send message';
-				try {
-					const errorData = await response.json();
-					console.error('API Error:', response.status, errorData);
-					errorMessage = errorData.error || errorMessage;
-				} catch (parseError) {
-					console.error('Failed to parse error response:', parseError);
-					errorMessage = `Server error (${response.status})`;
-				}
-				throw new Error(errorMessage);
+				const errorData = await response.json();
+				showModal({
+					title: 'Message Failed',
+					message: errorData.error || 'Failed to send message. Please try again.',
+					type: 'error'
+				});
 			}
 		} catch (error) {
-			console.error('Error sending message:', error);
-			const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
-			alert(errorMessage);
+			console.error('Error contacting agent:', error);
+			showModal({
+				title: 'Connection Error',
+				message: 'Failed to send message due to a connection error. Please check your internet connection and try again.',
+				type: 'error'
+			});
 		} finally {
 			submittingContact = false;
 		}
@@ -1045,3 +1089,16 @@
 		</div>
 	</div>
 {/if}
+
+<!-- Modal Dialog -->
+<ModalDialog
+	bind:isOpen={modalDialog.isOpen}
+	title={modalDialog.title}
+	message={modalDialog.message}
+	type={modalDialog.type}
+	showCancel={modalDialog.showCancel}
+	confirmText={modalDialog.confirmText}
+	cancelText={modalDialog.cancelText}
+	on:confirm={modalDialog.onConfirm}
+	on:cancel={modalDialog.onCancel}
+/>

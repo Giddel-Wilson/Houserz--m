@@ -9,11 +9,17 @@ export const GET: RequestHandler = async ({ url }) => {
     const search = url.searchParams.get('search');
     const location = url.searchParams.get('location');
     const propertyType = url.searchParams.get('type');
+    const listingType = url.searchParams.get('listingType');
     const bedrooms = url.searchParams.get('bedrooms');
+    const bathrooms = url.searchParams.get('bathrooms');
+    const minPrice = url.searchParams.get('minPrice');
+    const maxPrice = url.searchParams.get('maxPrice');
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    console.log('Properties API: Query params:', { search, location, propertyType, bedrooms });
+    console.log('Properties API: Query params:', { 
+      search, location, propertyType, listingType, bedrooms, bathrooms, minPrice, maxPrice 
+    });
 
     // Build where conditions
     const where: any = {
@@ -39,8 +45,27 @@ export const GET: RequestHandler = async ({ url }) => {
       where.propertyType = { equals: propertyType, mode: 'insensitive' };
     }
 
+    if (listingType) {
+      where.listingType = { equals: listingType, mode: 'insensitive' };
+    }
+
     if (bedrooms) {
       where.bedrooms = parseInt(bedrooms);
+    }
+
+    if (bathrooms) {
+      where.bathrooms = parseInt(bathrooms);
+    }
+
+    // Price range filters
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) {
+        where.price.gte = parseFloat(minPrice);
+      }
+      if (maxPrice) {
+        where.price.lte = parseFloat(maxPrice);
+      }
     }
 
     console.log('Properties API: Where clause:', JSON.stringify(where, null, 2));
